@@ -24,3 +24,4 @@ https://github.com/project-ubin - Ubin project code : Banks deposit money into t
 Smart contracts of an abstract deal.
 4.	Исходные коды адаптера R-Chain в части работы с абстрактной сделкой.
 Source codes of the R-Chain adapter regarding an abstract deal
+
