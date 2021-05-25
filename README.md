@@ -27,4 +27,4 @@ Smart contracts of an abstract deal.
 Source codes of the R-Chain adapter regarding an abstract deal.
 
 
-![image](https://user-images.githubusercontent.com/64362605/119496058-c3db1f80-bd6b-11eb-8f5e-954e6fafcb1f.png)
+![image](https://user-images.githubusercontent.com/64362605/119496058-c3db1f80-bd6b-11eb-8f5e-954e6fafcb1f.png =250x)
