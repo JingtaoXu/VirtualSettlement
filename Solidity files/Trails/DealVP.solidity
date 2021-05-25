@@ -1,0 +1,536 @@
+pragma solidity ^0.5.0;
+
+// Сделка, свободная карта состояний
+// 
+//  0x6849809887c4bdb2b261f891eabe4a0f2bbac43e111d5ff3abd8f00abe054466
+
+contract DealFree
+{
+
+//------------------ Самоописание
+
+    struct SD_MethodDetails
+    {
+      string  name ;
+      string  desc ;
+      string  pars ;
+      string  outs ;
+    }
+
+    struct SD_EventDetails
+    {
+      string  name ;
+      string  desc ;
+      string  pars ;
+    }
+
+    mapping (bytes32 => SD_MethodDetails) SD_MethodsDetails ;
+    bytes32[] SD_MethodsList ;
+
+    mapping (bytes32 => SD_EventDetails) SD_EventsDetails ;
+    bytes32[] SD_EventsList ;
+
+//------------------ Основные реквизиты
+
+    address    Owner ;
+    bytes32    CreatorId ;
+    bytes32    DealKind ;
+    address    Parent ;
+    address    Arbitration ;
+    string     DataLink ;
+    uint256    Version ;
+    bytes32    Status ;
+    uint256    Locked ;
+     string    Remark ;
+
+    address    DebugAddress ;
+    bytes32    DebugBytes32 ;
+
+//------------------ Дополнительные реквизиты
+   
+    mapping (bytes32 => bytes32) Pars ;
+
+     bytes32[]  ParsExt ;
+// Последовательность дополнительных реквизитов
+//  Key
+//  Value
+
+//------------------ Список участников сделки
+
+    struct PartyRec
+    {
+      bytes32  id ;
+      bytes32  role ;
+    }
+    
+    mapping (address => PartyRec) Parties ;
+
+     bytes32[]  PartiesExt ;
+// Последовательность упаковки полей описания участника сделки
+//  Account
+//  Id
+//  Role
+//------------------ Карта изменения статусов
+
+    struct StatusStep
+    {
+      bytes32  next_status ;
+      bytes32  role ;
+    }
+
+    mapping (bytes32 => StatusStep) StatusMap ;
+
+        uint256  StatusMapUsed ;
+      bytes32[]  MapExt ;
+// Последовательность упаковки полей карты статусов
+//  Status
+//  StatusNext
+//  Role
+
+//------------------ История изменения статусов
+
+    struct HistoryRec
+    {
+      uint256  version ;
+      bytes32  status ;
+       string  remark ;
+      address  actor ;
+    }
+
+    mapping (uint256 => HistoryRec) History ;
+
+//------------------ Список прикрепленных документов
+
+    struct DocumentRec
+    {
+      address  actor ;
+      uint256  version ;
+      bytes32  status ;
+      bytes32  kind ;
+      bytes32  extension ;
+      bytes32  hash ;
+       string  link ;
+       string  remark ;
+       string  recipients ;
+    }
+
+    mapping (bytes32 => DocumentRec) Docs ;
+     bytes32[]  DocsList ;
+// Последовательность упаковки полей описания документа
+//  Id
+//  Version
+//  Status
+
+//------------------ Added from DealPayment
+
+    struct Payment
+    {
+      address  account_from ;
+      address  account_to ;
+      uint256  amount ;
+      bytes32  state ;
+      bytes32  confirmed ;
+    }
+
+      mapping (bytes32 => Payment) Payments ;
+
+    struct PaymentTrigger
+    {
+      bytes32  id ;
+      bytes32  state ;
+    }
+
+      PaymentTrigger[]  PaymentsTriggers ;
+
+
+//    struct PaymentsList
+//    {
+//      bytes32[]  ids ;
+//    }
+
+//      mapping (bytes32 => PaymentsList) PaymentsTrigByStatus ;
+
+    event Paid(bytes32  id, address  account_from, address  account_to, uint256  amount) ;
+
+//------------------
+
+    event DealUpdated(uint256 version); 
+
+    constructor(bytes32  creator_id_, bytes32  kind_, address  parent_, string memory  data_link_, bytes32[] memory pars_, bytes32[] memory parties_, bytes32[] memory map_) public
+    {
+       uint256  i    ;
+
+       
+            Owner= tx.origin ;
+        CreatorId= creator_id_ ;
+         DealKind= kind_ ;
+           Parent= parent_ ;
+         DataLink= data_link_ ;
+
+    StatusMapUsed= 0 ;
+
+          Version= 0 ;
+          Status ="New______" ;
+          Remark ="" ;
+
+       if(pars_.length>0)
+       {
+          for(i=0 ; i<pars_.length   ; i++)  ParsExt.push(pars_[i]) ;
+          for(i=0 ; i<pars_.length/2 ; i++)  Pars[pars_[2*i]]=pars_[2*i+1] ;
+       }
+        
+
+        
+       if(parties_.length>0)
+       {
+
+          for(i=0 ; i<parties_.length   ; i++) PartiesExt.push( parties_[i]) ;
+          for(i=0 ; i<parties_.length/3 ; i++) Parties[ address(uint160(uint256(parties_[3*i]))) ]=PartyRec({id: parties_[3*i+1], role: parties_[3*i+2]});
+       }
+
+       if(map_.length>0)
+       {
+                StatusMapUsed=1 ;
+
+          for(i=0 ; i<map_.length   ; i++)  MapExt.push( map_[i]) ;
+          for(i=0 ; i<map_.length/3 ; i++)  StatusMap[map_[3*i]]=StatusStep({next_status: map_[3*i+1], role: map_[3*i+2]}) ;
+       }
+
+       History[Version]=HistoryRec({version: Version, status: Status, remark: Remark, actor: tx.origin}) ;
+    }
+
+//    function() payable {}
+	
+//=============== Self-Description Iface
+//
+// 0xba69510a
+    function SD_Version() public pure returns (bytes32)
+    {
+       return("RBI 1.0") ;
+    }
+
+// 0x0d55e9f5
+    function SD_Identify() public pure returns (bytes32)
+    {
+       return("RBRU.DealVP.2021-05-12") ;
+    }
+
+// 0x3e7bd089
+    function SD_Describe() public pure returns (string memory)
+    {
+       return("Notification about changes in the system configuration") ;
+    }
+
+// 0x0ad0b98c
+    function SD_Implementation() public pure returns (address)
+    {
+       return(address(0x0)) ;
+    }
+//=============== Application Iface
+//
+// 0xabd95b95
+    function GetStatus() public view returns (bytes32, bytes32, address, uint256, bytes32, uint256, string memory, string memory retVal)
+    {
+       return(CreatorId, DealKind, Parent, Version, Status, Locked, DataLink, Remark) ;
+    }
+
+//0x108b58c9
+    function GetAttributes() public view returns (bytes32[] memory retVal)
+    {
+       return(ParsExt) ;
+    }
+
+//0x3a9e9723
+    function GetParties() public view returns (bytes32[] memory retVal)
+    {
+       return(PartiesExt) ;
+    }
+
+//0x2d7b2b27
+    function GetStatusMap() public view returns (bytes32[] memory retVal)
+    {
+       return(MapExt) ;
+    }
+    
+// 0x1efecdf6
+    function GetDocuments() public view returns (bytes32[] memory retVal)
+    {    
+       return(DocsList) ; 
+    }
+
+// 
+    function GetDocument(bytes32  file_id_) public view returns (bytes32, bytes32, bytes32, address, string memory, string memory, string memory retVal)
+    {    
+       return(Docs[file_id_].kind,
+              Docs[file_id_].extension,
+              Docs[file_id_].hash,
+              Docs[file_id_].actor,
+              Docs[file_id_].link,
+              Docs[file_id_].remark,
+              Docs[file_id_].recipients ) ;
+    }
+
+// 0x920cc179
+    function GetHistory(uint256 version_) public view returns (uint256, bytes32, string memory, address retVal)
+    {
+       return(History[version_].version, History[version_].status, History[version_].remark, History[version_].actor) ; 
+    }
+
+// 0xbf26e80b
+    function GetArbitration() public view returns (address retVal)
+    {
+       return(Arbitration) ; 
+    }
+
+// 0x496e171f
+    function GetDebug() public view returns (address, bytes32 retVal)
+    {
+       return(DebugAddress,DebugBytes32) ; 
+    }
+
+// 0x5d403f3c
+    function SetArbitration(address arbitration_) public
+    {
+        if((tx.origin  ==Owner &&
+            Arbitration== address(0x0)    ) ||
+           msg.sender ==Arbitration  ) 
+        {
+              arbitration_.call.gas(0x300000).value(0)(abi.encodeWithSignature("SetMainContract(address)", address(this))) ;
+
+              Arbitration=arbitration_ ;
+                   Locked= 0 ;
+        }
+
+          emit DealUpdated(Version) ;       
+    }
+
+// 0x
+    function SetStateLock(uint256 locked_) public
+    {
+        require(msg.sender==Arbitration);
+           
+          Locked=locked_ ;
+
+           emit DealUpdated(Version) ;       
+    }
+
+// 0x063eb97c
+    function SetParties(bytes32[] memory parties_) public
+    {
+       uint256  i    ;
+        
+       require(tx.origin==Owner);
+        
+       if(parties_.length>0)
+       {
+          for(i=0 ; i<parties_.length   ; i++)  PartiesExt.push( parties_[i]) ;
+          for(i=0 ; i<parties_.length/3 ; i++)
+          {
+              address buff;
+              bytes32 arrBuff = parties_[3*i];
+              assembly
+              {
+                mstore(0, arrBuff)
+                buff := mload(0)
+              }  
+            Parties[ buff ]=PartyRec({id: parties_[3*i+1], role: parties_[3*i+2]});
+          }
+       }
+
+          emit DealUpdated(Version) ;       
+    }
+
+// 0x9b4a25f6
+    function PrepareDocument(bytes32 file_id_, bytes32 kind_, bytes32 extension_, bytes32 hash_, string memory link_, string memory remark_, string memory recipients_) public
+    {
+          if(Docs[file_id_].version==0x00)
+              Docs[file_id_]=DocumentRec({version: 0x00, status: "", kind: kind_, extension: extension_, hash: hash_, link: link_, remark: remark_, recipients: recipients_, actor: msg.sender}) ;
+    }
+
+// 0xcd9a26f6
+// Структура docs_ - uid файла
+    function SetStatus(bytes32 status_, string memory remark_, string memory data_link_, bytes32[] memory docs_, bytes32[] memory pars_) public
+    {
+       uint256  version_ ;
+       uint256  i ;
+       uint256  j ;
+         bytes  memory dummy ;
+          bool  result ;
+
+          DebugBytes32=status_ ;
+          DebugAddress=msg.sender ;
+       
+       if(msg.sender!=Arbitration)
+       {
+         require( Locked              !=1);
+         require(iCheckStatus(status_)!=0);
+       }
+
+             Locked = 0 ;
+            version_=Version+1 ;
+
+       if(docs_.length>0)
+       {
+          for(i=0 ; i<docs_.length ; i++)
+          {   
+            if(Docs[docs_[i]].version==0x00 && Docs[docs_[i]].actor==msg.sender) 
+            {
+                Docs[docs_[i]].version=version_ ;
+                Docs[docs_[i]].status =status_ ;
+
+                DocsList.push(        docs_[i] ) ;
+                DocsList.push(bytes32(version_)) ;
+                DocsList.push(        status_  ) ;
+            }
+          }
+       }
+
+       if(pars_.length>0)
+       {
+          for(i=0 ; i<pars_.length/2 ; i++)
+          {   
+                Pars[pars_[2*i]]=pars_[2*i+1] ;
+
+            for(j=0 ; j<ParsExt.length ; j+=2)                
+              if(ParsExt[j]==pars_[2*i]) 
+              {
+                 ParsExt[j+1]=pars_[2*i+1] ;
+                    break ;
+              }
+
+              if(j>=ParsExt.length)
+              {
+                 ParsExt.push(pars_[2*i  ]) ;
+                 ParsExt.push(pars_[2*i+1]) ;
+              }
+              
+          }
+       }
+
+                          Version=version_ ;
+                           Status=status_ ;
+                           Remark=remark_ ;
+
+       dummy=bytes(data_link_) ;
+    if(dummy.length>0)  DataLink=data_link_ ;
+        
+       History[version_]=HistoryRec({version: version_, status: status_, remark: remark_, actor: msg.sender}) ;
+
+	   // Check payments for execution
+// 1. Check executing state of payment
+// 2. Check accept  of payment
+// 3. Execute payment and check it's result
+
+        for(i = 0 ; i < PaymentsTriggers.length ; i++)
+        {
+            if (PaymentsTriggers[i].state == status_)
+            {
+                if(Payments[PaymentsTriggers[i].id].confirmed == "Y")
+                {
+                    address curAccount = Payments[PaymentsTriggers[i].id].account_from  ;
+
+            (result,)=curAccount.call.gas(0x300000).value(0)(
+                abi.encodeWithSignature("ExecutePayment(bytes32)", PaymentsTriggers[i].id) ) ;
+        if(result==false) require(false) ;
+
+//                 emit Paid (         PaymentsTriggers[i].id,
+//                            Payments[PaymentsTriggers[i].id].account_from,
+//                            Payments[PaymentsTriggers[i].id].account_to,
+//                            Payments[PaymentsTriggers[i].id].amount        );
+                }
+            }
+
+        }
+	   
+          emit DealUpdated(version_); 
+    }
+
+// Проверка валидности переключения
+    function iCheckStatus(bytes32 status_) internal view returns (uint256 retVal)
+    {
+       bytes32  status_idx  ;
+       bytes32  role ;
+       uint256  check ;
+
+            if(StatusMapUsed==0)  return(1) ;
+
+                                 check=0 ;
+
+                 role=Parties[tx.origin].role ;
+
+                                  status_idx=Status | "\x00\x00\x00\x00\x00\x00\x00\x00\x00.1" ;
+            if(status_==StatusMap[status_idx].next_status &&
+                 role ==StatusMap[status_idx].role          )  check=1 ;
+
+                                  status_idx=Status | "\x00\x00\x00\x00\x00\x00\x00\x00\x00.2" ;
+            if(status_==StatusMap[status_idx].next_status &&
+                 role ==StatusMap[status_idx].role          )  check=1 ;
+
+                                  status_idx=Status | "\x00\x00\x00\x00\x00\x00\x00\x00\x00.3" ;
+            if(status_==StatusMap[status_idx].next_status &&
+                 role ==StatusMap[status_idx].role          )  check=1 ;
+
+                                  status_idx=Status | "\x00\x00\x00\x00\x00\x00\x00\x00\x00.4" ;
+            if(status_==StatusMap[status_idx].next_status &&
+                 role ==StatusMap[status_idx].role          )  check=1 ;
+
+       return(check) ;
+    }
+
+//========================== Added from DealPayment
+	
+//
+// 0x
+    function PutPayment(bytes32  id_, address  account_from_, address  account_to_,  uint256  amount_, bytes32  execute_state_) internal
+    {
+       bool  result ;
+
+//   If you want disable payment correction add next operator
+       if(Payments[id_].account_from!=address(0x00))  require(false) ;
+
+            Payments[id_]=Payment({account_from : account_from_,
+                                   account_to   : account_to_,
+                                    amount      : amount_,
+                                     state      : execute_state_,
+                                  confirmed     : "N"
+                                  });
+
+            PaymentsTriggers.push(PaymentTrigger({id : id_, state : execute_state_})) ;
+
+//         PaymentsTrigByStatus[execute_state_].ids.push(id_) ;
+
+            (result,)=account_from_.call.gas(0x300000).value(0)(
+                abi.encodeWithSignature("PutPayment(bytes32,address,address,uint256)",
+                                           id_, account_from_, account_to_, amount_)  ) ;
+        if(result==false) require(false) ;
+
+    }
+
+//
+// 0x
+    function LoadPayments(bytes32[] memory Payments_)  public
+    {
+        uint256  amount ;
+        uint256  i ;
+
+
+        for (i = 0; i < Payments_.length; i+=5)
+        {
+              amount=uint256(int256(Payments_[i+3])) ;
+            PutPayment(Payments_[i],
+                       address(bytes20(Payments_[i+1])),
+                       address(bytes20(Payments_[i+2])),
+                       amount,
+                       Payments_[i+4]) ;
+        }
+    }
+
+//
+// 0x
+    function ConfirmPayment(bytes32 _id) public
+    {
+        Payments[_id].confirmed="Y" ;
+    }
+
+	
+}

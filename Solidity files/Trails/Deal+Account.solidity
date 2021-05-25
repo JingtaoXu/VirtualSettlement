@@ -1,0 +1,349 @@
+pragma solidity ^0.5.0;
+
+//import "Account_edited.sol" ;
+
+contract Deal_Free
+{
+    address    Owner ;
+
+    bytes32[]  Debug ;
+
+    bytes32  State ;
+
+    struct Payment
+    {
+      address  account_from ;
+      address  account_to ;
+      uint256  amount ;
+      bytes32  state ;
+      bytes32  confirmed ;
+    }
+
+      mapping (bytes32 => Payment) Payments ;
+
+    struct PaymentTrigger
+    {
+      bytes32  id ;
+      bytes32  state ;
+    }
+
+      PaymentTrigger[]  PaymentsTriggers ;
+
+
+    struct PaymentsList
+    {
+      bytes32[]  ids ;
+    }
+
+      mapping (bytes32 => PaymentsList) PaymentsTrigByStatus ;
+
+
+
+    event DeliveryFile(uint256 version) ;
+
+    event ChangedState(bytes32 state) ;
+    event Paid(bytes32  id, address  account_from, address  account_to, uint256  amount) ;
+
+    constructor() public
+    {
+            Owner=msg.sender ;
+            State="NEW" ;
+    }
+
+//    function() payable {}
+
+//=============== Self-Description Iface
+//
+// 0x55d93027
+    function SD_Version() public pure returns (bytes32)
+    {
+       return("RBI 1.0") ;
+    }
+
+// 0x0d55e9f5
+    function SD_Identify() public pure returns (bytes32)
+    {
+       return("RBRU.Deal.2021-01-15") ;
+    }
+
+// 0x3e7bd089
+    function SD_Describe() public pure returns (string memory)
+    {
+       return("Business process control") ;
+    }
+
+//=============== Debug Iface
+//
+// 0x
+
+    function GetDebug()  public view returns (bytes32[] memory retVal)
+    {
+       return(Debug) ;
+    }
+
+//=============== Application Iface
+//
+// 0x
+
+
+// 0x
+    function PutPayment(bytes32  id_, address  account_from_, address  account_to_,  uint256  amount_, bytes32  execute_state_) internal
+    {
+       bool  result ;
+
+//   If you want disable payment correction add next operator
+       if(Payments[id_].account_from!=address(0x00))  require(false) ;
+
+            Payments[id_]=Payment({account_from : account_from_,
+                                   account_to   : account_to_,
+                                    amount      : amount_,
+                                     state      : execute_state_,
+                                  confirmed     : "N"
+                                  });
+
+            PaymentsTriggers.push(PaymentTrigger({id : id_, state : execute_state_})) ;
+
+//         PaymentsTrigByStatus[execute_state_].ids.push(id_) ;
+
+            (result,)=account_from_.call.gas(0x300000).value(0)(
+                abi.encodeWithSignature("PutPayment(bytes32,address,address,uint256)",
+                                           id_, account_from_, account_to_, amount_)  ) ;
+        if(result==false) require(false) ;
+
+    }
+
+// 0x
+    function GetState()  public view returns (bytes32 retVal)
+    {
+       return(State) ;
+    }
+
+   // Try to implement:
+//1. The LoadPayments method for the implementation of transactions in the Deal contract (hint - loaded as an array bytes32 - the address and int256 are convert
+//ed to bytes32) with saving payments in the context of the contract and calling the PutPayment method of the corresponding Account contract (li
+//nk 1.1 in the figure).
+//2. Transfer of payment confirmation from the Account contract to the Deal contract (link 2.2 in the figure).
+//3. In the SetState method of the Deal contract, implement the execution of payments triggered by the status (link 3.2 in the figure).
+
+    //loaded as an array bytes32
+    function LoadPayments(bytes32[] memory Payments_)  public
+    {
+        uint256  amount ;
+        uint256  i ;
+
+
+        for (i = 0; i < Payments_.length; i+=5)
+        {
+              amount=uint256(int256(Payments_[i+3])) ;
+            PutPayment(Payments_[i],
+                       address(bytes20(Payments_[i+1])),
+                       address(bytes20(Payments_[i+2])),
+                       amount,
+                       Payments_[i+4]) ;
+        }
+    }
+
+    function ConfirmPayment(bytes32 _id) public
+    {
+        Payments[_id].confirmed="Y" ;
+    }
+
+
+    function SetState(bytes32  state_) public
+    {
+      uint  i ;
+      bool  result ;
+
+// Check payments for execution
+// 1. Check executing state of payment
+// 2. Check accept  of payment
+// 3. Execute payment and check it's result
+
+        for(i = 0 ; i < PaymentsTriggers.length ; i++)
+        {
+            if (PaymentsTriggers[i].state == state_)
+            {
+                if(Payments[PaymentsTriggers[uint256(i)].id].confirmed == "Y")
+                {
+                    address curAccount = Payments[PaymentsTriggers[i].id].account_from  ;
+
+
+            (result,)=curAccount.call.gas(0x300000).value(0)(
+                abi.encodeWithSignature("ExecutePayment(bytes32)", PaymentsTriggers[i].id) ) ;
+        if(result==false) require(false) ;
+
+                 emit Paid (         PaymentsTriggers[i].id,
+                            Payments[PaymentsTriggers[i].id].account_from,
+                            Payments[PaymentsTriggers[i].id].account_to,
+                            Payments[PaymentsTriggers[i].id].amount        );
+                }
+            }
+
+        }
+
+
+/*
+
+     for(i=0 ;  i<PaymentsTrigByStatus[execute_state_].ids.length ; i++)
+     {
+        bytes32  id=PaymentsTrigByStatus[execute_state_].ids[i] ;
+
+                if(Payments[id].confirmed == "Y")
+                {
+                    ....
+                }
+     }
+*/
+
+        State = state_ ;
+
+                 emit ChangedState(state_) ;
+
+    }
+
+}
+
+
+//import "Deal_edited.sol" ;
+
+contract Account
+{
+    address    Owner ;
+     int256    Balance ;
+
+   bytes32[]  Debug ;
+
+    struct Payment
+    {
+      bytes32  id ;
+      address  account_to ;
+      uint256  amount ;
+      bytes32  accepted ;
+    }
+
+    struct Deal
+    {
+      mapping (bytes32 => Payment) Payments ;
+      bytes32                      Used ;
+    }
+
+    mapping (address => Deal) Deals ;
+
+    //unique payment
+    //mapping (bytes32 => mapping(bytes32 => Payment)) Paymentss ;
+
+    event  AcceptPayment(bytes32  id, address  deal, address  account_from, address  account_to, uint256  amount) ;
+
+    constructor() public payable
+    {
+            Owner = msg.sender ;
+            Balance = 10000;
+    }
+
+//    function() payable {}
+
+//=============== Self-Description Iface
+//
+// 0x55d93027
+    function SD_Version() public pure returns (bytes32)
+    {
+       return("RBI 1.0") ;
+    }
+
+// 0x0d55e9f5
+    function SD_Identify() public pure returns (bytes32)
+    {
+       return("RBRU.Account.2021-01-27") ;
+    }
+
+// 0x3e7bd089
+    function SD_Describe() public pure returns (string memory)
+    {
+       return("Account control") ;
+    }
+
+
+//=============== Debug Iface
+//
+// 0x
+
+    function GetDebug()  public view returns (bytes32[] memory retVal)
+    {
+       return(Debug) ;
+    }
+
+//=============== Application Iface
+//
+// 0xf9e50ac9
+    function PutPayment(bytes32  id_, address  account_from_, address  account_to_,  uint256  amount_) public
+    {
+        if( address(this)!=account_from_)  require(false) ;
+
+            Deals[msg.sender]=Deal({ Used : "Y"} ) ;
+
+            Deals[msg.sender].Payments[id_]=Payment({     id     : id_,
+                                                     account_to  : account_to_,
+                                                      amount     : amount_,
+                                                    accepted     : "N"
+                                                   });
+
+        emit AcceptPayment(id_, msg.sender, address(this), account_to_, amount_) ;
+    }
+
+//
+// 0x
+    function PaymentAccepted(address  deal_, bytes32  id_) public
+    {
+      bool  result ;
+
+       if( msg.sender!=Owner)  require(false) ;
+
+        Deals[deal_].Payments[id_].accepted = "Y" ;
+
+            (result,)=deal_.call.gas(0x300000).value(0)(
+                abi.encodeWithSignature("ConfirmPayment(bytes32)", id_)  ) ;
+        if(result==false) require(false) ;
+    }
+
+
+// 0xda763e14
+    function GetPayment(address deal_, bytes32  id_)  public view returns (address, uint256, bytes32 retVal)
+    {
+       return(Deals[deal_].Payments[id_].account_to,
+              Deals[deal_].Payments[id_].amount,
+              Deals[deal_].Payments[id_].accepted) ;
+    }
+
+//
+    function GetBalance() public view returns (int256)
+    {
+        return(Balance) ;
+    }
+
+// income function
+    function Income(uint256 amount) public
+    {
+//      if ( some condition ) require(false) ;
+
+        Balance += int256(amount) ;
+    }
+
+// execute payment
+    function ExecutePayment( bytes32 id_ )  public returns (bool retval)
+    {
+        bool  result ;
+
+        if (Deals[msg.sender].Payments[id_].accepted != "Y") require(false) ;
+
+        Account beneficiaryAcc = Account(Deals[msg.sender].Payments[id_].account_to) ;
+
+//           beneficiaryAcc.Income(Deals[msg.sender].Payments[id_].amount) ;
+        (result,)=address(beneficiaryAcc).call.gas(0x300000).value(0)(abi.encodeWithSignature("Income(unit256)", Deals[msg.sender].Payments[id_].amount)) ;
+        if(result==false) require(false) ;
+
+        Balance -= int256(Deals[msg.sender].Payments[id_].amount) ;
+
+       return result;
+    }
+
+}

@@ -1,0 +1,76 @@
+pragma solidity ^0.5.0;
+
+contract Deal
+{
+    address    Owner ;
+
+   bytes32[]  Debug ;    
+
+     bytes32  State ;    
+
+
+    event DeliveryFile(uint256 version) ; 
+
+    constructor() public 
+    {
+            Owner=msg.sender ;
+            State="NEW" ;
+    }
+
+//    function() payable {}
+	
+//=============== Self-Description Iface
+//
+// 0x55d93027
+    function SD_Version() public pure returns (bytes32)
+    {
+       return("RBI 1.0") ;
+    }
+
+// 0x0d55e9f5
+    function SD_Identify() public pure returns (bytes32)
+    {
+       return("RBRU.Deal.2021-01-15") ;
+    }
+
+// 0x3e7bd089
+    function SD_Describe() public pure returns (string memory)
+    {
+       return("Business process control") ;
+    }
+
+//=============== Debug Iface
+//
+// 0x
+
+    function GetDebug()  public view returns (bytes32[] memory retVal)
+    {
+       return(Debug) ;
+    }
+
+//=============== Application Iface
+//
+// 0x
+    function SetState(bytes32  state_) public
+    {
+           Debug.length=0 ;
+           Debug.push("0") ;
+           
+       if(state_=="1"){
+           Debug.push("1") ;
+       }
+       else{
+           Debug.push("not 1") ;
+       }
+
+          State=state_ ;
+
+    }
+
+// 0x
+    function GetState()  public view returns (bytes32 retVal)
+    {
+       return(State) ;
+    }
+    
+}
