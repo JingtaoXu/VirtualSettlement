@@ -4,6 +4,7 @@
 
 ## Purpose 
 Разработка механизма корпоративных взаиморасчетов для группы компаний, а также её реализации для Платформы на основе абстрактных бизнес-объектов R-Chain.
+
 Design and development of corporate settlements mechanism for a group of companies based on R-Chain abstract business objects.
 
 
