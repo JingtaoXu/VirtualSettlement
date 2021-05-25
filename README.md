@@ -6,6 +6,7 @@
 Разработка механизма корпоративных взаиморасчетов для группы компаний, а также её реализации для Платформы на основе абстрактных бизнес-объектов R-Chain.
 
 Design and development of corporate settlements mechanism for a group of companies based on R-Chain abstract business objects.
+![image](https://user-images.githubusercontent.com/64362605/119495058-a9547680-bd6a-11eb-90ef-0022d16e903d.png)
 
 
 ## Objectives 
