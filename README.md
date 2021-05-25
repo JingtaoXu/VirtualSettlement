@@ -15,8 +15,6 @@ Improvement of the existing "abstract deals" concept on the R-Chain platform. Mo
 •	Анализ различных вариантов архитектуры - с центральным учетным смарт-контрактом и с выделенным узлом взаимозачетов - Оракулом. Определение преимуществ и недостатков обеих вариантов, а также возможных границ их применимости.
 Design and analysis different options of the settlement mechanism : first - with a central accounting smart contract, second - with a dedicated node - Oracle. It will be necessary to determine advantages and disadvantages of both options, as well as the possible boundaries of their applicability
 
-![eee](https://user-images.githubusercontent.com/64362605/119496041-be7dd500-bd6b-11eb-8307-179ab1a001f7.jpg)
-
 ## Методические материалы и обеспечивающие работы со стороны Райффайзенбанка.
 
 1.	Нужно предварительно проанализировать:  sg-fsi-project-ubin-report.pdf - расчетная система Сингапура на блокчейне Quorum, в части архитектуры платформы по расчетам
@@ -26,5 +24,7 @@ https://github.com/project-ubin - Ubin project code : Banks deposit money into t
 3.	Смарт-контракты описания абстрактной сделки.
 Smart contracts of an abstract deal.
 4.	Исходные коды адаптера R-Chain в части работы с абстрактной сделкой.
-Source codes of the R-Chain adapter regarding an abstract deal
+Source codes of the R-Chain adapter regarding an abstract deal.
+
+
 ![image](https://user-images.githubusercontent.com/64362605/119496058-c3db1f80-bd6b-11eb-8f5e-954e6fafcb1f.png)
