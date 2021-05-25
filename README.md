@@ -11,6 +11,7 @@ Design and development of corporate settlements mechanism for a group of compani
 ## Objectives 
 •	Развитие существующей концепции абстрактных сделок на платформе R-Chain. Доработка программного кода адаптера Mirror только в части расчетов.
 Improvement of the existing "abstract deals" concept on the R-Chain platform. Modification of the smart-contracts and adapter program code in terms of settlement only.
+
 •	Анализ различных вариантов архитектуры - с центральным учетным смарт-контрактом и с выделенным узлом взаимозачетов - Оракулом. Определение преимуществ и недостатков обеих вариантов, а также возможных границ их применимости.
 Design and analysis different options of the settlement mechanism : first - with a central accounting smart contract, second - with a dedicated node - Oracle. It will be necessary to determine advantages and disadvantages of both options, as well as the possible boundaries of their applicability
 
